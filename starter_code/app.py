@@ -46,6 +46,7 @@ class Venue(db.Model):
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
     genres = db.Column(db.String(120))
+    shows = db.relationship('Shows',backref='Show', lazy=True)
     
     def __repr__(self):
       return f'<Venue {self.id} {self.name} {self.address}>'
@@ -63,6 +64,23 @@ class Artist(db.Model):
     genres = db.Column(db.String(120))
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
+  
+class Shows(db.Model):
+    __tablename__='Shows'
+
+      # Foreign Keys
+    id = db.Column(db.Integer, primary_key=True)
+    artist_id = db.Column(db.Integer, db.ForeignKey('Artist.id'))
+    venue_id = db.Column(db.Integer, db.ForeignKey('Venue.id'))
+    # relationships
+    artist = db.relationship(
+        Artist,
+        backref=db.backref('shows', cascade='all, delete')
+    )
+    venue = db.relationship(
+        Venue,
+        backref=db.backref('', cascade='all, delete')
+    )
 
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
 
@@ -96,6 +114,8 @@ def index():
 
 @app.route('/venues')
 def venues():
+
+  all_areas = []
   # TODO: replace with real venues data.
   #       num_shows should be aggregated based on number of upcoming shows per venue.
   data=[{
@@ -307,16 +327,26 @@ def artists():
 
 @app.route('/artists/search', methods=['POST'])
 def search_artists():
+  artist_name = request.form.get('search_term')
   # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
   # seach for "A" should return "Guns N Petals", "Matt Quevado", and "The Wild Sax Band".
   # search for "band" should return "The Wild Sax Band".
+  artists = Artist.query.filter(Artist.name.ilike("%"+ artist_name+ "%")).all()
+  number_of_results = len(artists)
+  
+  data = []
+
+  for artist in artists:
+    artist = {
+        "id": artist.id,
+        "name": artist.name,
+        "num_upcoming_shows": 0,
+        }
+    data.append(artist)
+
   response={
-    "count": 1,
-    "data": [{
-      "id": 4,
-      "name": "Guns N Petals",
-      "num_upcoming_shows": 0,
-    }]
+    "count": number_of_results,
+    "data": data
   }
   return render_template('pages/search_artists.html', results=response, search_term=request.form.get('search_term', ''))
 
@@ -403,21 +433,15 @@ def show_artist(artist_id):
 @app.route('/artists/<int:artist_id>/edit', methods=['GET'])
 def edit_artist(artist_id):
   form = ArtistForm()
-  artist={
-    "id": 4,
-    "name": "Guns N Petals",
-    "genres": ["Rock n Roll"],
-    "city": "San Francisco",
-    "state": "CA",
-    "phone": "326-123-5000",
-    "website": "https://www.gunsnpetalsband.com",
-    "facebook_link": "https://www.facebook.com/GunsNPetals",
-    "seeking_venue": True,
-    "seeking_description": "Looking for shows to perform at in the San Francisco Bay Area!",
-    "image_link": "https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80"
-  }
-  # TODO: populate form with fields from artist with ID <artist_id>
-  return render_template('forms/edit_artist.html', form=form, artist=artist)
+  error = False
+
+  
+  artist = db.session.query(Artist.name).filter(Artist.id == artist_id).all()
+  
+  if artist == []:
+    flash('An error occurred. No Artist could be found.')
+    return redirect(url_for('index'))
+  return render_template('forms/edit_artist.html', form=form, artist=artist[0])
 
 @app.route('/artists/<int:artist_id>/edit', methods=['POST'])
 def edit_artist_submission(artist_id):
@@ -545,6 +569,8 @@ def create_shows():
 
 @app.route('/shows/create', methods=['POST'])
 def create_show_submission():
+  form = ShowForm(request.form)
+  print()
   # called to create new shows in the db, upon submitting new show listing form
   # TODO: insert form data as a new Show record in the db, instead
 
