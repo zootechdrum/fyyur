@@ -256,7 +256,6 @@ def create_venue_submission():
     image_link = form.image_link.data
     facebook_link = form.facebook_link.data
     venue_to_add = Venue(name=name, address=address,city=city,state=state,phone=phone,genres=genres,image_link=image_link,facebook_link=facebook_link)
-    print(genres)
     db.session.add(venue_to_add)
     db.session.commit()
   
@@ -293,17 +292,17 @@ def delete_venue(venue_id):
 #  ----------------------------------------------------------------
 @app.route('/artists')
 def artists():
-  # TODO: replace with real data returned from querying the database
-  data=[{
-    "id": 4,
-    "name": "Guns N Petals",
-  }, {
-    "id": 5,
-    "name": "Matt Quevedo",
-  }, {
-    "id": 6,
-    "name": "The Wild Sax Band",
-  }]
+  artists = db.session.query(Artist.id, Artist.name).all()
+
+  data = []
+
+  for artist in artists:
+    artist_dic = {
+      "id": artist.id,
+      "name":artist.name
+    }
+    data.append(artist_dic)
+
   return render_template('pages/artists.html', artists=data)
 
 @app.route('/artists/search', methods=['POST'])
@@ -463,15 +462,33 @@ def create_artist_form():
 
 @app.route('/artists/create', methods=['POST'])
 def create_artist_submission():
-  # called upon submitting the new artist listing form
-  # TODO: insert form data as a new Venue record in the db, instead
-  # TODO: modify data to be the data object returned from db insertion
 
-  # on successful db insert, flash success
-  flash('Artist ' + request.form['name'] + ' was successfully listed!')
-  # TODO: on unsuccessful db insert, flash an error instead.
-  # e.g., flash('An error occurred. Artist ' + data.name + ' could not be listed.')
-  return render_template('pages/home.html')
+  form = ArtistForm(request.form)
+  error = False
+  try:
+    name = form.name.data
+    city = form.city.data
+    state = form.state.data
+    phone = form.phone.data
+    genres = form.genres.data
+    image_link = form.image_link.data
+    facebook_link = form.facebook_link.data
+    artist_to_add = Artist(name=name,city=city,state=state,phone=phone,genres=genres,image_link=image_link,facebook_link=facebook_link)
+
+    db.session.add(artist_to_add)
+    db.session.commit()
+  
+  except:
+    error = True
+    db.session.rollback()
+  finally:
+    db.session.close()
+  if error:
+    flash('An error occurred. Artist could not be listed.')
+    abort(400)
+  else:
+    flash('Artist ' + request.form['name'] + ' was successfully listed!')
+    return render_template('pages/home.html')
 
 
 #  Shows
