@@ -1,4 +1,3 @@
-
 #----------------------------------------------------------------------------#
 # Imports
 #----------------------------------------------------------------------------#
@@ -45,9 +44,11 @@ class Venue(db.Model):
     state = db.Column(db.String(120))
     address = db.Column(db.String(120))
     phone = db.Column(db.String(120))
+    seeking_talent = db.Column(db.Boolean)
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
     genres = db.Column(db.String(120))
+    seeking_description = db.Column(db.String(120))
     shows = db.relationship('Shows',backref='Show', lazy=True)
     
     def __repr__(self):
@@ -265,7 +266,7 @@ def create_venue_form():
 
 def create_venue_submission():
   form = VenueForm(request.form)
-  print(form)
+  
 
   body = {}
   error = False
