@@ -9,7 +9,9 @@ import babel
 from flask import Flask, render_template, request, Response, flash, redirect, url_for, jsonify,abort
 from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import func
+from sqlalchemy import func, DateTime
+from datetime import datetime
+
 import logging
 from logging import Formatter, FileHandler
 from flask_wtf import Form
@@ -66,12 +68,14 @@ class Artist(db.Model):
     facebook_link = db.Column(db.String(120))
   
 class Shows(db.Model):
-    __tablename__='Shows'
+    __tablename__='Show'
 
       # Foreign Keys
     id = db.Column(db.Integer, primary_key=True)
     artist_id = db.Column(db.Integer, db.ForeignKey('Artist.id'))
     venue_id = db.Column(db.Integer, db.ForeignKey('Venue.id'))
+    start_time = db.Column(db.DateTime)
+
     # relationships
     artist = db.relationship(
         Artist,
@@ -114,35 +118,34 @@ def index():
 
 @app.route('/venues')
 def venues():
+  print(datetime.now())
 
-  all_areas = []
+  all_areas = Venue.query.with_entities(func.count(Venue.id), Venue.city, Venue.state).group_by(Venue.city, Venue.state).all()
+
+  venues_info = []
   # TODO: replace with real venues data.
   #       num_shows should be aggregated based on number of upcoming shows per venue.
-  data=[{
-    "city": "San Francisco",
-    "state": "CA",
-    "venues": [{
-      "id": 1,
-      "name": "The Musical Hop",
-      "num_upcoming_shows": 0,
-    }, {
-      "id": 3,
-      "name": "Park Square Live Music & Coffee",
-      "num_upcoming_shows": 1,
-    }]
-  }, {
-    "city": "New York",
-    "state": "NY",
-    "venues": [{
-      "id": 2,
-      "name": "The Dueling Pianos Bar",
-      "num_upcoming_shows": 0,
-    }]
-  }]
+  for area in all_areas:
+    area_venues = Venue.query.filter_by(state=area.state).filter_by(city=area.city).all()
+    print(area.city)
+    local_venue_info = {
+      "city":area.city,
+      "state":area.state,
+      "venues":[]
+    }
 
+  for venue in area_venues:
+
+    local_venue_info["venues"].append({
+      "id": venue.id,
+      "name":venue.name,
+      "num_upcoming_shows": len(Shows.query.filter_by(venue_id=venue.id).filter(Shows.start_time > datetime.now()).all())
+    })
+
+  venues_info.append(local_venue_info)
 
   return render_template('pages/venues.html',
-  areas = data) 
+  areas = venues_info) 
  
 
  
@@ -328,9 +331,6 @@ def artists():
 @app.route('/artists/search', methods=['POST'])
 def search_artists():
   artist_name = request.form.get('search_term')
-  # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
-  # seach for "A" should return "Guns N Petals", "Matt Quevado", and "The Wild Sax Band".
-  # search for "band" should return "The Wild Sax Band".
   artists = Artist.query.filter(Artist.name.ilike("%"+ artist_name+ "%")).all()
   number_of_results = len(artists)
   
@@ -570,16 +570,39 @@ def create_shows():
 @app.route('/shows/create', methods=['POST'])
 def create_show_submission():
   form = ShowForm(request.form)
-  print()
+  error = False
+  # I.D's that work in the database 
+  # artist = 1
+  # venue id = 6
+  
+  show = Shows( 
+     artist_id = form.artist_id.data,
+     venue_id = form.venue_id.data,
+     start_time = form.start_time.data
+  )
+  try:
+    db.session.add(show)
+    db.session.commit()
+    flash('Show was succesfully listed!')
+  except:
+
+    error = True
+    flash('Show was succesfully listed!')
+    db.session.rollback()
+  finally:
+    db.session.close()
+  return render_template('pages/home.html')
+ 
+    # artist_id = db.Column(db.Integer, db.ForeignKey('Artist.id'))
+    # venue_id = db.Column(db.Integer, db.ForeignKey('Venue.id'))
   # called to create new shows in the db, upon submitting new show listing form
   # TODO: insert form data as a new Show record in the db, instead
 
   # on successful db insert, flash success
-  flash('Show was successfully listed!')
   # TODO: on unsuccessful db insert, flash an error instead.
   # e.g., flash('An error occurred. Show could not be listed.')
   # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
-  return render_template('pages/home.html')
+
 
 @app.errorhandler(404)
 def not_found_error(error):
