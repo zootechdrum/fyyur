@@ -21,7 +21,7 @@ class VenueForm(Form):
         'name', validators=[DataRequired()]
     )
     
-    seeking_talent = RadioField('label', choices=[('True','Yes'),('value_two','False')])
+    seeking_talent = RadioField('label', choices=[('True','Yes'),('False','No')])
 
     city = StringField(
         'city', validators=[DataRequired()]

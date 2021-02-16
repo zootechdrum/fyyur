@@ -39,23 +39,26 @@ class Venue(db.Model):
     __tablename__ = 'Venue'
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String)
-    city = db.Column(db.String(120))
+    name = db.Column(db.String(100))
+    city = db.Column(db.String(100))
     state = db.Column(db.String(120))
     address = db.Column(db.String(120))
-    phone = db.Column(db.String(120))
-    seeking_talent = db.Column(db.Boolean)
+    phone = db.Column(db.String(100))
+    seeking_talent = db.Column(db.BOOLEAN)
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
-    genres = db.Column(db.String(120))
+    genres = db.Column(db.ARRAY(db.String(120)))
     seeking_description = db.Column(db.String(120))
-    shows = db.relationship('Shows',backref='Show', lazy=True)
+
+    shows = db.relationship('Shows', cascade = "all,delete", backref='show', lazy=False)
+    # artist = db.relationship('Artist', cascade = "all,delete", backref='artist', lazy=True)
     
     def __repr__(self):
       return f'<Venue {self.id} {self.name} {self.address}>'
 
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
 
+list_id = db.Column(db.Integer, db.ForeignKey('todolists.id'),nullable=False)
 class Artist(db.Model):
     __tablename__ = 'Artist'
 
@@ -64,7 +67,7 @@ class Artist(db.Model):
     city = db.Column(db.String(120))
     state = db.Column(db.String(120))
     phone = db.Column(db.String(120))
-    genres = db.Column(db.String(120))
+    genres = db.Column(db.ARRAY(db.String))
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
   
@@ -76,16 +79,6 @@ class Shows(db.Model):
     artist_id = db.Column(db.Integer, db.ForeignKey('Artist.id'))
     venue_id = db.Column(db.Integer, db.ForeignKey('Venue.id'))
     start_time = db.Column(db.DateTime)
-
-    # relationships
-    artist = db.relationship(
-        Artist,
-        backref=db.backref('shows', cascade='all, delete')
-    )
-    venue = db.relationship(
-        Venue,
-        backref=db.backref('', cascade='all, delete')
-    )
 
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
 
@@ -119,36 +112,33 @@ def index():
 
 @app.route('/venues')
 def venues():
-  print(datetime.now())
+  
 
   all_areas = Venue.query.with_entities(func.count(Venue.id), Venue.city, Venue.state).group_by(Venue.city, Venue.state).all()
-
   venues_info = []
   # TODO: replace with real venues data.
   #       num_shows should be aggregated based on number of upcoming shows per venue.
   for area in all_areas:
     area_venues = Venue.query.filter_by(state=area.state).filter_by(city=area.city).all()
-    print(area.city)
-    local_venue_info = {
+
+    local_venue_info = []
+
+    for venue in area_venues:
+      local_venue_info.append({
+        "id": venue.id,
+        "name":venue.name,
+        "num_upcoming_shows": len(Shows.query.filter_by(venue_id=venue.id).filter(Shows.start_time > datetime.now()).all())
+      })
+    venues_info.append({
       "city":area.city,
       "state":area.state,
-      "venues":[]
-    }
-
-  for venue in area_venues:
-
-    local_venue_info["venues"].append({
-      "id": venue.id,
-      "name":venue.name,
-      "num_upcoming_shows": len(Shows.query.filter_by(venue_id=venue.id).filter(Shows.start_time > datetime.now()).all())
-    })
-
-  venues_info.append(local_venue_info)
+      "venues":local_venue_info
+    })  
+    print(venues_info)
+    venues_info.append(local_venue_info)
 
   return render_template('pages/venues.html',
   areas = venues_info) 
- 
-
  
 
 @app.route('/venues/search', methods=['POST'])
@@ -266,8 +256,11 @@ def create_venue_form():
 
 def create_venue_submission():
   form = VenueForm(request.form)
-  
 
+  if form.seeking_talent.data == 'True':
+    form.seeking_talent.data = True
+  else:
+    form.seeking_talent.data = False
   body = {}
   error = False
   try:
@@ -278,8 +271,11 @@ def create_venue_submission():
     phone = form.phone.data
     genres = form.genres.data
     image_link = form.image_link.data
+    seeking_description = form.seeking_description.data
+    seeking_talent = form.seeking_talent.data
     facebook_link = form.facebook_link.data
-    venue_to_add = Venue(name=name, address=address,city=city,state=state,phone=phone,genres=genres,image_link=image_link,facebook_link=facebook_link)
+
+    venue_to_add = Venue(name=name, seeking_talent=seeking_talent, address=address,city=city,state=state,phone=phone,genres=genres,image_link=image_link, seeking_description=seeking_description, facebook_link=facebook_link)
     db.session.add(venue_to_add)
     db.session.commit()
   
@@ -290,7 +286,7 @@ def create_venue_submission():
     db.session.close()
   if error:
     flash('An error occurred. Venue  could not be listed.')
-    abort(400)
+    abort(500)
   else:
     flash('Venue ' + request.form['name'] + ' was successfully listed!')
   return render_template('pages/home.html')
