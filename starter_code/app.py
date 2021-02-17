@@ -134,8 +134,7 @@ def venues():
       "state":area.state,
       "venues":local_venue_info
     })  
-    print(venues_info)
-    venues_info.append(local_venue_info)
+    
 
   return render_template('pages/venues.html',
   areas = venues_info) 
