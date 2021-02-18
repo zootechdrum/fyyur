@@ -19,23 +19,5 @@ for (let item of deleteButtons) {
         }).catch(err => {
             console.log(err)
         })
-    
-  
 }
 
-
-// const deleteButtons = document.querySelectorAll('.delete-item');
-// for (let i = 0; i < deleteButtons.length; i++) {
-//     const deleteButton = deleteButtons[i];
-//     deleteButton.onclick = (e) => {
-//         console.log("hello")
-//         const todoId = e.target.dataset['id']
-//         console.log(todoId)
-//         fetch('/todos/' + todoId + '/delete', {
-//             method: 'DELETE',
-//         }).catch(err => {
-//             console.log(err)
-//             document.getElementById('error').className = ''
-//         })
-//     }
-// }
