@@ -18,6 +18,15 @@
               {{ form.state(class_ = 'form-control', placeholder='State', autofocus = true) }}
             </div>
           </div>
+          <div class="form-group">
+            <label>Currently Seeking Talent</label>
+            <div class="radio">
+              <label>
+                {{ form.seeking_talent(value = true, type = 'radio') }}
+  
+              </label>
+            </div>
+         </div>
       </div>
       <div class="form-group">
         <label for="address">Address</label>

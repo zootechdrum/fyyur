@@ -47,7 +47,7 @@ class Venue(db.Model):
     seeking_talent = db.Column(db.BOOLEAN)
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
-    genres = db.Column(db.ARRAY(db.String(120)))
+    genres = db.Column(db.ARRAY(db.String))
     seeking_description = db.Column(db.String(120))
 
     shows = db.relationship('Shows', cascade = "all,delete", backref='Venue', lazy=False)
@@ -395,20 +395,22 @@ def edit_artist_submission(artist_id):
 
 @app.route('/venues/<int:venue_id>/edit', methods=['GET'])
 def edit_venue(venue_id):
-  form = VenueForm()
+  # form = VenueForm()
   venue_query = db.session.query(Venue).filter(Venue.id==venue_id).first()
-  venue_name = {"name":venue_query.name}
 
-
-  form.name.data=venue_query.name
-  form.city.data=venue_query.city
-  form.phone.data=venue_query.phone
-  form.state.data="CA"
-  print(venue_query.state)
   
+  venue = Venue.query.first_or_404(venue_id) 
+  print(venue)
+  s = ''.join(list(filter(lambda x : x!= '{' and x!='}', venue_query.genres ))).split(',')
+
+  venue_query.genres = s
+
+ 
+  form = VenueForm(obj=venue_query)
+ 
 
   # TODO: populate form with values from venue with ID <venue_id>
-  return render_template('forms/edit_venue.html', form=form, venue=venue_name)
+  return render_template('forms/edit_venue.html', form=form, venue={"name":venue_query.name})
 
 @app.route('/venues/<int:venue_id>/edit', methods=['POST'])
 def edit_venue_submission(venue_id):
