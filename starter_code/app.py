@@ -395,28 +395,61 @@ def edit_artist_submission(artist_id):
 
 @app.route('/venues/<int:venue_id>/edit', methods=['GET'])
 def edit_venue(venue_id):
-  # form = VenueForm()
   venue_query = db.session.query(Venue).filter(Venue.id==venue_id).first()
 
   
   venue = Venue.query.first_or_404(venue_id) 
-  print(venue)
-  s = ''.join(list(filter(lambda x : x!= '{' and x!='}', venue_query.genres ))).split(',')
+  genres_formatted = ''.join(list(filter(lambda x : x!= '{' and x!='}', venue_query.genres ))).split(',')
 
-  venue_query.genres = s
+  venue_query.genres = genres_formatted
 
- 
+  template_object = {"name":venue_query.name , "id": venue_query.id}
+  
   form = VenueForm(obj=venue_query)
  
 
   # TODO: populate form with values from venue with ID <venue_id>
-  return render_template('forms/edit_venue.html', form=form, venue={"name":venue_query.name})
+  return render_template('forms/edit_venue.html', form=form, venue=template_object)
 
 @app.route('/venues/<int:venue_id>/edit', methods=['POST'])
 def edit_venue_submission(venue_id):
-  # TODO: take values from the form submitted, and update existing
-  # venue record with ID <venue_id> using the new attributes
-  return redirect(url_for('show_venue', venue_id=venue_id))
+  form = VenueForm(request.form)
+  
+  db.session.query(Venue).filter(Venue.id==venue_id).update({"name": form.name.data })
+
+
+  if form.seeking_talent.data == 'True':
+    form.seeking_talent.data = True
+  else:
+    form.seeking_talent.data = False
+  body = {}
+  error = False
+  try:
+    name = form.name.data
+    address = form.address.data
+    city = form.city.data
+    state = form.state.data
+    phone = form.phone.data
+    genres = form.genres.data
+    image_link = form.image_link.data
+    seeking_description = form.seeking_description.data
+    seeking_talent = form.seeking_talent.data
+    facebook_link = form.facebook_link.data
+
+    venue_to_update = db.session.query(Venue).filter(Venue.id==venue_id).update({Venue.name:form.name.data})
+    db.session.commit()
+  
+  except:
+    error = True
+    db.session.rollback()
+  finally:
+    db.session.close()
+  if error:
+    flash('An error occurred. Venue  could not be edited')
+    abort(500)
+  else:
+    flash('Venue ' + request.form['name'] + ' was successfully updated')
+  return render_template('pages/home.html')
 
 #  Create Artist
 #  ----------------------------------------------------------------
