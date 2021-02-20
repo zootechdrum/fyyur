@@ -99,6 +99,11 @@ def format_datetime(value, format='medium'):
 
 app.jinja_env.filters['datetime'] = format_datetime
 
+def format_genres (genres):
+    genres_formatted = ''.join(list(filter(lambda x : x!= '{' and x!='}', genres ))).split(',')
+    return genres_formatted
+
+
 #----------------------------------------------------------------------------#
 # Controllers.
 #----------------------------------------------------------------------------#
@@ -375,16 +380,18 @@ def show_artist(artist_id):
 #  ----------------------------------------------------------------
 @app.route('/artists/<int:artist_id>/edit', methods=['GET'])
 def edit_artist(artist_id):
-  form = ArtistForm()
-  error = False
+  artist = Artist.query.first_or_404(artist_id)
 
+  artist_query = db.session.query(Artist).filter(Artist.id==artist_id).first()
+  artist_query.genres = format_genres(artist_query.genres)
+
+  form = ArtistForm(obj=artist_query)
+  template_object = {"name":artist_query.name , "id": artist_query.id}
   
   artist = db.session.query(Artist.name).filter(Artist.id == artist_id).all()
   
-  if artist == []:
-    flash('An error occurred. No Artist could be found.')
-    return redirect(url_for('index'))
-  return render_template('forms/edit_artist.html', form=form, artist=artist[0])
+
+  return render_template('forms/edit_artist.html', form=form, artist=template_object)
 
 @app.route('/artists/<int:artist_id>/edit', methods=['POST'])
 def edit_artist_submission(artist_id):
@@ -399,7 +406,7 @@ def edit_venue(venue_id):
 
   
   venue = Venue.query.first_or_404(venue_id) 
-  genres_formatted = ''.join(list(filter(lambda x : x!= '{' and x!='}', venue_query.genres ))).split(',')
+  venue_query.genres = format_genres( venue_query.genres)
 
   venue_query.genres = genres_formatted
 
