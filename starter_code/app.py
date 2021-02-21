@@ -9,7 +9,7 @@ from flask import Flask, render_template, request, Response, flash, redirect, ur
 from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func, DateTime
-from datetime import datetime
+import datetime
 
 import logging
 from logging import Formatter, FileHandler
@@ -98,7 +98,11 @@ class Shows(db.Model):
 
 
 def format_datetime(value, format='medium'):
-  date = dateutil.parser.parse(value)
+  # date = dateutil.parser.parse(value)
+  if isinstance(value, str):
+        date = dateutil.parser.parse(value)
+  else:
+        date = value
   if format == 'full':
       format = "EEEE MMMM, d, y 'at' h:mma"
   elif format == 'medium':
@@ -370,6 +374,43 @@ def search_artists():
 def show_artist(artist_id):
   # shows the venue page with the given venue_id
   # TODO: replace with real venue data from the venues table, using venue_id
+
+  artist_query = db.session.query(Artist).filter(Artist.id == artist_id).first()
+  print(artist_query.name)
+
+  future_shows = db.session.query(Shows).filter(artist_id==Shows.artist_id).filter(Shows.start_time > datetime.now()).all()
+  count_of_future_shows = len(future_shows)
+
+  data = {
+    "id":artist_query.id,
+    "name":artist_query.name,
+    "genres":format_genres(artist_query.genres),
+    "city":artist_query.city,
+    "state":artist_query.state,
+    "phone":artist_query.phone,
+    "facebook_link":artist_query.facebook_link,
+    "image_link":artist_query.image_link,
+    "past_shows":[],
+    "upcoming_shows":[],
+    "past_shows_count": 1,
+    "upcoming_shows_count": count_of_future_shows,
+  }
+
+
+
+  for future_show in future_shows:
+    venue_query = db.session.query(Venue).filter(Venue.id==future_show.venue_id).first()
+    x = future_show.start_time 
+    print(x)
+    show_to_add = {
+      "venue_id":future_show.venue_id,
+      "venue_name":venue_query.name,
+      "venue_image_link":venue_query.image_link,
+      "start_time":future_show.start_time
+    }
+    data["past_shows"].append(show_to_add)
+    data["upcoming_shows_count"]:count_of_future_shows
+    print(count_of_future_shows)
   data1 = {
     "id": 1,
     "name": "Guns N Petals",
@@ -392,7 +433,8 @@ def show_artist(artist_id):
     "past_shows_count": 1,
     "upcoming_shows_count": 0,
   }
-  data = list(filter(lambda d: d['id'] == artist_id, [data1, data2, data3]))[0]
+  # data = list(filter(lambda d: d['id'] == artist_id, [data1]))[0]
+  print(data)
   return render_template('pages/show_artist.html', artist=data)
 
 #  Update
