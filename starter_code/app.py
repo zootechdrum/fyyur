@@ -76,6 +76,9 @@ class Artist(db.Model):
     genres = db.Column(db.ARRAY(db.String))
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
+    seeking_description = db.Column(db.String(120))
+    seeking_venue = db.Column(db.BOOLEAN)
+    website = db.Column(db.String(120))
 
 
 class Shows(db.Model):
@@ -384,6 +387,7 @@ def show_artist(artist_id):
 
   past_shows = db.session.query(Shows).filter(artist_id==Shows.artist_id).filter(Shows.start_time < datetime.now()).all()
   count_of_past_shows = len(past_shows)
+  print(artist_query.seeking_description)
 
   data = {
     "id":artist_query.id,
@@ -392,6 +396,9 @@ def show_artist(artist_id):
     "city":artist_query.city,
     "state":artist_query.state,
     "phone":artist_query.phone,
+    "website":artist_query.website,
+    "seeking_description":artist_query.seeking_description,
+    "seeking_venue":artist_query.seeking_venue,
     "facebook_link":artist_query.facebook_link,
     "image_link":artist_query.image_link,
     "past_shows":[],
@@ -405,8 +412,7 @@ def show_artist(artist_id):
 
   for future_show in future_shows:
     venue_query = db.session.query(Venue).filter(Venue.id==future_show.venue_id).first()
-    x = future_show.start_time 
-    print(x)
+
     show_to_add = {
       "venue_id":future_show.venue_id,
       "venue_name":venue_query.name,
@@ -426,7 +432,7 @@ def show_artist(artist_id):
     data["past_shows"].append(shows_to_add)
 
   # data = list(filter(lambda d: d['id'] == artist_id, [data1]))[0]
-  print(data)
+  print
   return render_template('pages/show_artist.html', artist=data)
 
 #  Update
@@ -577,6 +583,12 @@ def create_artist_form():
 def create_artist_submission():
 
   form = ArtistForm(request.form)
+
+  if form.seeking_venue.data == 'True':
+    form.seeking_venue.data = True
+  else:
+    form.seeking_venue.data = False
+
   error = False
   try:
     name = form.name.data
@@ -586,7 +598,13 @@ def create_artist_submission():
     genres = form.genres.data
     image_link = form.image_link.data
     facebook_link = form.facebook_link.data
-    artist_to_add = Artist(name=name,city=city,state=state,phone=phone,genres=genres,image_link=image_link,facebook_link=facebook_link)
+    seeking_venue = form.seeking_venue.data
+    seeking_description = form.seeking_description.data
+    website = form.website.data
+    artist_to_add = Artist(name=name,city=city,state=state,phone=phone,genres=genres,
+      image_link=image_link,seeking_venue=seeking_venue,seeking_description=seeking_description, 
+      facebook_link=facebook_link, website=website)
+    print(artist_to_add.seeking_venue)
 
     db.session.add(artist_to_add)
     db.session.commit()

@@ -131,6 +131,15 @@ class ArtistForm(Form):
     city = StringField(
         'city', validators=[DataRequired()]
     )
+    seeking_description =  StringField(
+        'seeking_description', validators=[DataRequired()]
+    )
+    website =  StringField(
+        'website', validators=[DataRequired()]
+    )
+
+    seeking_venue = RadioField('label', choices=[('True','Yes'),('False','No')])
+    
     state = SelectField(
         'state', validators=[DataRequired()],
         choices=[
