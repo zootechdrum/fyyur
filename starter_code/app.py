@@ -381,6 +381,9 @@ def show_artist(artist_id):
   future_shows = db.session.query(Shows).filter(artist_id==Shows.artist_id).filter(Shows.start_time > datetime.now()).all()
   count_of_future_shows = len(future_shows)
 
+  past_shows = db.session.query(Shows).filter(artist_id==Shows.artist_id).filter(Shows.start_time < datetime.now()).all()
+  count_of_past_shows = len(past_shows)
+
   data = {
     "id":artist_query.id,
     "name":artist_query.name,
@@ -392,9 +395,10 @@ def show_artist(artist_id):
     "image_link":artist_query.image_link,
     "past_shows":[],
     "upcoming_shows":[],
-    "past_shows_count": 1,
+    "past_shows_count": count_of_past_shows,
     "upcoming_shows_count": count_of_future_shows,
   }
+
 
 
 
@@ -408,9 +412,18 @@ def show_artist(artist_id):
       "venue_image_link":venue_query.image_link,
       "start_time":future_show.start_time
     }
-    data["past_shows"].append(show_to_add)
-    data["upcoming_shows_count"]:count_of_future_shows
-    print(count_of_future_shows)
+    data["upcoming_shows"].append(show_to_add)
+
+  for past_show in past_shows:
+    venue_query = db.session.query(Venue).filter(Venue.id==past_show.venue_id).first()
+    shows_to_add = {
+      "venue_id":past_show.venue_id,
+      "venue_name":venue_query.name,
+      "venue_image_link":venue_query.image_link,
+      "start_time":past_show.start_time
+    }
+    data["past_shows"].append(shows_to_add)
+
   data1 = {
     "id": 1,
     "name": "Guns N Petals",
