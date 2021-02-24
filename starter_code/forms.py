@@ -20,6 +20,10 @@ class VenueForm(Form):
     name = StringField(
         'name', validators=[DataRequired()]
     )
+
+    website =  StringField(
+        'website', validators=[DataRequired()]
+    )
     
     seeking_talent = RadioField('label', choices=[('True','Yes'),('False','No')])
 
