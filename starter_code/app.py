@@ -230,15 +230,15 @@ def show_venue(venue_id):
     }
     data["upcoming_shows"].append(show_to_add)
 
-  # for past_show in past_shows:
-  #   venue_query = db.session.query(Venue).filter(Venue.id==past_show.venue_id).first()
-  #   shows_to_add = {
-  #     "venue_id":past_show.venue_id,
-  #     "venue_name":venue_query.name,
-  #     "venue_image_link":venue_query.image_link,
-  #     "start_time":past_show.start_time
-  #   }
-  #   data["past_shows"].append(shows_to_add)
+  for past_show in past_shows:
+    venue_query = db.session.query(Venue).filter(Venue.id==past_show.venue_id).first()
+    shows_to_add = {
+      "venue_id":past_show.venue_id,
+      "venue_name":venue_query.name,
+      "venue_image_link":venue_query.image_link,
+      "start_time":past_show.start_time
+    }
+    data["past_shows"].append(shows_to_add)
 
 
   # print(artist_query.seeking_description)
