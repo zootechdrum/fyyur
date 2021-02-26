@@ -10,6 +10,7 @@ from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func, DateTime
 import datetime
+from models import setup_db, Venue, Shows, Artist
 
 import logging
 from logging import Formatter, FileHandler
@@ -24,77 +25,7 @@ app = Flask(__name__)
 moment = Moment(app)
 app.config.from_object('config')
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgres://zootechdrum@localhost:5432/fyurr'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)
-
-# TODO: connect to a local postgresql database
-migrate = Migrate(app, db)
-
-#----------------------------------------------------------------------------#
-# Models.
-#----------------------------------------------------------------------------#
-
-
-class Venue(db.Model):
-    __tablename__ = 'Venue'
-
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100))
-    city = db.Column(db.String(100))
-    state = db.Column(db.String(120))
-    address = db.Column(db.String(120))
-    phone = db.Column(db.String(100))
-    seeking_talent = db.Column(db.BOOLEAN)
-    image_link = db.Column(db.String(500))
-    facebook_link = db.Column(db.String(120))
-    website = db.Column(db.String(120))
-    genres = db.Column(db.ARRAY(db.String))
-    seeking_description = db.Column(db.String(120))
-
-    shows = db.relationship('Shows', cascade="all,delete",
-                            backref='Venue', lazy=False)
-
-    # artist = db.relationship('Artist', cascade = "all,delete", backref='artist', lazy=True)
-
-    def __repr__(self):
-      return f'<Venue {self.id} {self.name} {self.address}>'
-
-    # TODO: implement any missing fields, as a database migration using Flask-Migrate
-
-
-list_id = db.Column(db.Integer, db.ForeignKey('todolists.id'), nullable=False)
-
-
-class Artist(db.Model):
-    __tablename__ = 'Artist'
-
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String)
-    city = db.Column(db.String(120))
-    state = db.Column(db.String(120))
-    phone = db.Column(db.String(120))
-    genres = db.Column(db.ARRAY(db.String))
-    image_link = db.Column(db.String(500))
-    facebook_link = db.Column(db.String(120))
-    seeking_description = db.Column(db.String(120))
-    seeking_venue = db.Column(db.BOOLEAN)
-    website = db.Column(db.String(120))
-
-
-class Shows(db.Model):
-    __tablename__ = 'Show'
-
-      # Foreign Keys
-    id = db.Column(db.Integer, primary_key=True)
-    artist_id = db.Column(db.Integer, db.ForeignKey('Artist.id'))
-    venue_id = db.Column(db.Integer, db.ForeignKey(
-        'Venue.id', ondelete="CASCADE"))
-    start_time = db.Column(db.DateTime)
-
-    # TODO: implement any missing fields, as a database migration using Flask-Migrate
-
-# TODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
+setup_db(app)
 
 #----------------------------------------------------------------------------#
 # Filters.
@@ -321,7 +252,8 @@ def delete_venue(venue_id):
 
 @app.route('/artists')
 def artists():
-  artists = db.session.query(Artist.id, Artist.name).all()
+  artists = Artist.query.all()
+  print(artists)
 
   data = []
 
