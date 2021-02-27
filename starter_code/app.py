@@ -163,7 +163,6 @@ def show_venue(venue_id):
     data["upcoming_shows"].append(show_to_add)
 
   for artist, show in past_shows:
-    print(artist.id)
     shows_to_add = {
       "venue_id":show.id,
       "artist_name":artist.name,
@@ -172,14 +171,8 @@ def show_venue(venue_id):
     }
     data["past_shows"].append(shows_to_add)
 
-
-  # print(artist_query.seeking_description)
-  # shows the venue page with the given venue_id
   # TODO: replace with real venue data from the venues table, using venue_id
 
-
-
-  
   return render_template('pages/show_venue.html', venue=data)
 
 
@@ -237,7 +230,6 @@ def create_venue_submission():
 
 @app.route('/venues/<venue_id>', methods=['DELETE'])
 def delete_venue(venue_id):
-  print(venue_id)
   try:
     x = Venue.query.filter_by(id=venue_id).delete()
     db.session.commit()
@@ -255,7 +247,7 @@ def delete_venue(venue_id):
 @app.route('/artists')
 def artists():
   artists = Artist.query.all()
-  print(artists)
+
 
   data = []
 
@@ -353,8 +345,6 @@ def show_artist(artist_id):
       "start_time":show.start_time
     }
     data["upcoming_shows"].append(show_to_add)
-
-  # data = list(filter(lambda d: d['id'] == artist_id, [data1]))[0]
   return render_template('pages/show_artist.html', artist=data)
 
 
@@ -380,7 +370,7 @@ def edit_artist_submission(artist_id):
   artist = Artist.query.first_or_404(artist_id)
 
   artist_query = db.session.query(Artist).filter(Artist.id == artist_id).first()
-  print(artist_query)
+
 
   try:
     error=False
@@ -416,10 +406,6 @@ def edit_artist_submission(artist_id):
     flash('Artist ' + request.form['name'] + ' was successfully updated')
   return render_template('pages/home.html')
 
-  # TODO: take values from the form submitted, and update existing
-  # artist record with ID <artist_id> using the new attributes
-
-  # return redirect(url_for('show_artist', artist_id=artist_id))
 
 @app.route('/venues/<int:venue_id>/edit', methods=['GET'])
 def edit_venue(venue_id):
@@ -523,7 +509,7 @@ def create_artist_submission():
     artist_to_add = Artist(name=name,city=city,state=state,phone=phone,genres=genres,
       image_link=image_link,seeking_venue=seeking_venue,seeking_description=seeking_description, 
       facebook_link=facebook_link, website=website)
-    print(artist_to_add.seeking_venue)
+
 
     db.session.add(artist_to_add)
     db.session.commit()
@@ -548,7 +534,7 @@ def create_artist_submission():
 def shows():
 
   shows = db.session.query(Artist,Venue,Shows).all()
-  print(shows)
+
   
   show_data = []
 
@@ -562,7 +548,7 @@ def shows():
       "artist_image_link": artist.image_link,
       "start_time":show.start_time
     })
-  print(show_data)
+
 
   return render_template('pages/shows.html', shows=show_data)
 
@@ -630,4 +616,3 @@ if __name__ == '__main__':
     app.run(host='0.0.0.0', port=port)
 '''
 
-# INSERT INTO "Venue" (name,city,state,address,phone,image_link,facebook_link) VALUES('The Musical Hop','San Francisco','CA','1015 Folsom Street','123-123-1234','https://images.unsplash.com/photo-1543900694-133f37abaaa5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=400&q=60','https://www.facebook.com/TheMusicalHop');
