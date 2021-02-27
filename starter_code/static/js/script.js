@@ -16,7 +16,8 @@ for (let item of deleteButtons) {
 
             fetch('/venues/' + id, {
             method: 'DELETE',
-        }).catch(err => {
+        }).then(data => location.reload())
+        .catch(err => {
             console.log(err)
         })
 }
