@@ -72,8 +72,6 @@ def venues():
   all_areas = Venue.query.with_entities(func.count(
       Venue.id), Venue.city, Venue.state).group_by(Venue.city, Venue.state).all()
   venues_info = []
-  # TODO: replace with real venues data.
-  #       num_shows should be aggregated based on number of upcoming shows per venue.
   for area in all_areas:
     area_venues = Venue.query.filter_by(
         state=area.state).filter_by(city=area.city).all()
@@ -189,42 +187,47 @@ def create_venue_form():
 
 @app.route('/venues/create', methods=['POST'])
 def create_venue_submission():
-  form = VenueForm(request.form)
+  form = VenueForm(request.form, csrf_enabled=False)
+  if form.validate():
 
-  if form.seeking_talent.data == 'True':
-    form.seeking_talent.data = True
-  else:
-    form.seeking_talent.data = False
-  body = {}
-  error = False
-  try:
-    name = form.name.data
-    address = form.address.data
-    city = form.city.data
-    state = form.state.data
-    phone = form.phone.data
-    genres = form.genres.data
-    image_link = form.image_link.data
-    website = form.website.data
-    seeking_description = form.seeking_description.data
-    seeking_talent = form.seeking_talent.data
-    facebook_link = form.facebook_link.data
+    if form.seeking_talent.data == 'True':
+      form.seeking_talent.data = True
+    else:
+      form.seeking_talent.data = False
 
-    venue_to_add = Venue(name=name, seeking_talent=seeking_talent, address=address, city=city, state=state, phone=phone,
-                         genres=genres, image_link=image_link, website=website, seeking_description=seeking_description, facebook_link=facebook_link)
-    db.session.add(venue_to_add)
-    db.session.commit()
+    body = {}
+    error = False
+    x
+    try:
+      name = form.name.data
+      address = form.address.data
+      city = form.city.data
+      state = form.state.data
+      phone = form.phone.data
+      genres = form.genres.data
+      image_link = form.image_link.data
+      website = form.website.data
+      seeking_description = form.seeking_description.data
+      seeking_talent = form.seeking_talent.data
+      facebook_link = form.facebook_link.data
 
-  except:
-    error = True
-    db.session.rollback()
-  finally:
-    db.session.close()
-  if error:
-    flash('An error occurred. Venue  could not be listed.')
-    abort(500)
-  else:
-    flash('Venue ' + request.form['name'] + ' was successfully listed!')
+      venue_to_add = Venue(name=name, seeking_talent=seeking_talent, address=address, city=city, state=state, phone=phone,
+                          genres=genres, image_link=image_link, website=website, seeking_description=seeking_description, facebook_link=facebook_link)
+      db.session.add(venue_to_add)
+      db.session.commit()
+
+    except:
+      error = True
+      db.session.rollback()
+    finally:
+      db.session.close()
+    if error:
+      flash('An error occurred. Venue  could not be listed.')
+      abort(500)
+    else:
+      flash('Venue ' + request.form['name'] + ' was successfully listed!')
+  else: flash(form.errors)
+
   return render_template('pages/home.html')
 
 
@@ -420,14 +423,12 @@ def edit_venue(venue_id):
   form = VenueForm(obj=venue_query)
  
 
-  # TODO: populate form with values from venue with ID <venue_id>
   return render_template('forms/edit_venue.html', form=form, venue=template_object)
 
 @app.route('/venues/<int:venue_id>/edit', methods=['POST'])
 def edit_venue_submission(venue_id):
   form = VenueForm(request.form)
   
-  # db.session.query(Venue).filter(Venue.id==venue_id).update({"name": form.name.data })
 
 
   if form.seeking_talent.data == 'True':
