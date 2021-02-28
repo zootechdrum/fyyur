@@ -197,7 +197,6 @@ def create_venue_submission():
 
     body = {}
     error = False
-    x
     try:
       name = form.name.data
       address = form.address.data

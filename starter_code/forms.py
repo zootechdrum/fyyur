@@ -24,8 +24,7 @@ class VenueForm(Form):
     )
 
     website =  StringField(
-        'website', validators=[DataRequired()
-        ]
+        'website', validators=[DataRequired(), Regexp("^(http:\/\/www\.|https:\/\/www\.|http:\/\/|https:\/\/)[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(\/.*)?", message="Url format is not correct")]
     )
     
     seeking_talent = RadioField('label', choices=[('True','Yes'),('False','No')])
@@ -97,10 +96,11 @@ class VenueForm(Form):
         'address', validators=[DataRequired()]
     )
     phone = StringField(
-        'phone'
+        'phone', validators=[DataRequired(), Regexp("^(\+0?1\s)?\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}$", message="Please use a correct format ex. 666-666-6666")]
     )
     image_link = StringField(
-        'image_link'
+        'image_link', validators=[Regexp("(https?:\/\/.*\.(?:png|jpg))", message="Please update link to include a correct image link")
+        ]
     )
     genres = SelectMultipleField(
         # TODO implement enum restriction
@@ -129,7 +129,7 @@ class VenueForm(Form):
     )
             # 'facebook_link', validators=[DataRequired(), Regexp('^[0-9]', message="fill this out hoe")]
     facebook_link = StringField(
-        'facebook_link', validators=[DataRequired(), Regexp('^[0-9]', message="The correct format for the facebook link was not correct")]
+        'facebook_link', validators=[DataRequired(), Regexp('(?:(?:http|https):\/\/)?(?:www.)?facebook.com\/(?:(?:\w)*#!\/)?(?:pages\/)?(?:[?\w\-]*\/)?(?:profile.php\?id=(?=\d.*))?([\w\-]*)?', message="The correct format for the facebook link was not correct")]
     )
 
 class ArtistForm(Form):
